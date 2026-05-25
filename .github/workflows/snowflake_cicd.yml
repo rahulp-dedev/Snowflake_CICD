@@ -39,8 +39,8 @@ jobs:
           -u $SNOWFLAKE_USER \
           -r $SNOWFLAKE_ROLE \
           -w $SNOWFLAKE_WAREHOUSE \
-          -d ecommerce_db \
-          -c ecommerce_db.public.schemachange_history \
+          -d ECOMMERCE_DB \
+          -c ECOMMERCE_DB.PUBLIC.SCHEMACHANGE_HISTORY \
           --dry-run
 
       - name: Run schemachange (Deploy to Production)
@@ -51,6 +51,6 @@ jobs:
           -u $SNOWFLAKE_USER \
           -r $SNOWFLAKE_ROLE \
           -w $SNOWFLAKE_WAREHOUSE \
-          -d ecommerce_db \
-          -c ecommerce_db.public.schemachange_history
+          -d ECOMMERCE_DB \
+          -c ECOMMERCE_DB.PUBLIC.SCHEMACHANGE_HISTORY
           --create-change-history-table
