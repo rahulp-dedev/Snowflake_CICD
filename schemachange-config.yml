@@ -1,0 +1,4 @@
+root-folder: migrations
+snowflake-database: ecommerce_db
+snowflake-schema: public
+change_history_table: schemachange_history
