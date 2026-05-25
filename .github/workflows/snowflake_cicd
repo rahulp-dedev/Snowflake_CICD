@@ -1,0 +1,55 @@
+name: Snowflake CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  deploy-snowflake-changes:
+    runs-on: ubuntu-latest
+
+    env:
+      SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+      SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+      SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+      SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+      SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install schemachange
+        run: pip install schemachange
+
+      - name: Run schemachange (Dry Run for PRs)
+        if: github.event_name == 'pull_request'
+        run: |
+          schemachange -f migrations \
+          -a $SNOWFLAKE_ACCOUNT \
+          -u $SNOWFLAKE_USER \
+          -r $SNOWFLAKE_ROLE \
+          -w $SNOWFLAKE_WAREHOUSE \
+          -d olist_db \
+          -c olist_db.public.schemachange_history \
+          --dry-run
+
+      - name: Run schemachange (Deploy to Production)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          schemachange -f migrations \
+          -a $SNOWFLAKE_ACCOUNT \
+          -u $SNOWFLAKE_USER \
+          -r $SNOWFLAKE_ROLE \
+          -w $SNOWFLAKE_WAREHOUSE \
+          -d olist_db \
+          -c olist_db.public.schemachange_history
