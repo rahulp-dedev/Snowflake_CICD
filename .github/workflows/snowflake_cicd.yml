@@ -39,8 +39,8 @@ jobs:
           -u $SNOWFLAKE_USER \
           -r $SNOWFLAKE_ROLE \
           -w $SNOWFLAKE_WAREHOUSE \
-          -d olist_db \
-          -c olist_db.public.schemachange_history \
+          -d ecommerce_db \
+          -c ecommerce_db.public.schemachange_history \
           --dry-run
 
       - name: Run schemachange (Deploy to Production)
@@ -51,5 +51,5 @@ jobs:
           -u $SNOWFLAKE_USER \
           -r $SNOWFLAKE_ROLE \
           -w $SNOWFLAKE_WAREHOUSE \
-          -d olist_db \
-          -c olist_db.public.schemachange_history
+          -d ecommerce_db \
+          -c ecommerce_db.public.schemachange_history
