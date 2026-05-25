@@ -52,5 +52,5 @@ jobs:
           -r $SNOWFLAKE_ROLE \
           -w $SNOWFLAKE_WAREHOUSE \
           -d ECOMMERCE_DB \
-          -c ECOMMERCE_DB.PUBLIC.SCHEMACHANGE_HISTORY
+          -c ECOMMERCE_DB.PUBLIC.SCHEMACHANGE_HISTORY \
           --create-change-history-table
