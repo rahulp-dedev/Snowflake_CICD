@@ -53,3 +53,4 @@ jobs:
           -w $SNOWFLAKE_WAREHOUSE \
           -d ecommerce_db \
           -c ecommerce_db.public.schemachange_history
+          --create-change-history-table
