@@ -3,6 +3,8 @@ name: Snowflake CI/CD Pipeline
 on:
   push:
     branches:
+      - dev
+      - stage
       - main
   pull_request:
     branches:
@@ -30,6 +32,20 @@ jobs:
 
       - name: Install schemachange
         run: pip install schemachange
+
+      - name: Determine Target Environment
+        id: env_setup
+        run: |
+          if [[ "${{ github.ref }}" == 'refs/heads/dev' ]]; then
+            echo "TARGET_DB=ECOMMERCE_DEV" >> $GITHUB_ENV
+          elif [[ "${{ github.ref }}" == 'refs/heads/stage' ]]; then
+            echo "TARGET_DB=ECOMMERCE_STAGE" >> $GITHUB_ENV
+          elif [[ "${{ github.ref }}" == 'refs/heads/main' ]]; then
+            echo "TARGET_DB=ECOMMERCE_DB" >> $GITHUB_ENV
+          else
+            echo "Branch not mapped to an environment."
+            exit 1
+          fi
 
       - name: Run schemachange (Dry Run for PRs)
         if: github.event_name == 'pull_request'
