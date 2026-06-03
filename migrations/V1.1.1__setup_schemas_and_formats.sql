@@ -25,6 +25,11 @@ CREATE OR REPLACE FILE FORMAT BRONZE_LAYER.JSON_FORMAT
     TYPE = 'JSON'
     STRIP_OUTER_ARRAY = TRUE;
 
+CREATE OR REPLACE STAGE BRONZE_LAYER.gcs_realtime_stage
+  URL = 'gcs://snowflake-realtime-ds-pipeline/'
+  STORAGE_INTEGRATION = GCS_INT
+  FILE_FORMAT = BRONZE_LAYER.CSV_FORMAT;
+
 -- Governance tag used across gold layer for column-level privacy classification
 CREATE TAG IF NOT EXISTS PUBLIC.PRIVACY_LEVEL
     ALLOWED_VALUES 'HIGH','MEDIUM','LOW'
