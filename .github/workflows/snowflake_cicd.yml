@@ -3,6 +3,8 @@ name: Snowflake CI/CD Pipeline
 on:
   push:
     branches:
+      - dev
+      - stage
       - main
   pull_request:
     branches:
@@ -31,26 +33,64 @@ jobs:
       - name: Install schemachange
         run: pip install schemachange
 
+      - name: Determine Target Environment
+        id: env_setup
+        run: |
+          # If it is a PR, look at the branch we are merging INTO. If it is a push, look at the CURRENT branch.
+          if [[ "${{ github.event_name }}" == 'pull_request' ]]; then
+            BRANCH_NAME="${{ github.base_ref }}"
+          else
+            BRANCH_NAME="${{ github.ref_name }}"
+          fi
+
+          echo "Detected target branch: $BRANCH_NAME"
+
+          # Map the branch to the correct Snowflake Database
+          if [[ "$BRANCH_NAME" == 'dev' ]]; then
+            echo "TARGET_DB=ECOMMERCE_DEV" >> $GITHUB_ENV
+          elif [[ "$BRANCH_NAME" == 'stage' ]]; then
+            echo "TARGET_DB=ECOMMERCE_STAGE" >> $GITHUB_ENV
+          elif [[ "$BRANCH_NAME" == 'main' ]]; then
+            echo "TARGET_DB=ECOMMERCE_DB" >> $GITHUB_ENV
+          else
+            echo "Branch not mapped to an environment. Exiting."
+            exit 1
+          fi
+
       - name: Run schemachange (Dry Run for PRs)
         if: github.event_name == 'pull_request'
+        env:
+          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+          SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+          SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+          SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
         run: |
+          echo "Running DRY RUN against database: $TARGET_DB"
           schemachange -f migrations \
           -a $SNOWFLAKE_ACCOUNT \
           -u $SNOWFLAKE_USER \
           -r $SNOWFLAKE_ROLE \
           -w $SNOWFLAKE_WAREHOUSE \
-          -d ECOMMERCE_DB \
-          -c ECOMMERCE_DB.PUBLIC.SCHEMACHANGE_HISTORY \
+          -d $TARGET_DB \
+          -c $TARGET_DB.PUBLIC.SCHEMACHANGE_HISTORY \
           --dry-run
 
-      - name: Run schemachange (Deploy to Production)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      - name: Run schemachange (Deploy to Environment)
+        if: github.event_name == 'push'
+        env:
+          SNOWFLAKE_ACCOUNT: ${{ secrets.SNOWFLAKE_ACCOUNT }}
+          SNOWFLAKE_USER: ${{ secrets.SNOWFLAKE_USER }}
+          SNOWFLAKE_ROLE: ${{ secrets.SNOWFLAKE_ROLE }}
+          SNOWFLAKE_WAREHOUSE: ${{ secrets.SNOWFLAKE_WAREHOUSE }}
+          SNOWFLAKE_PRIVATE_KEY: ${{ secrets.SNOWFLAKE_PRIVATE_KEY }}
         run: |
+          echo "Deploying changes to database: $TARGET_DB"
           schemachange -f migrations \
           -a $SNOWFLAKE_ACCOUNT \
           -u $SNOWFLAKE_USER \
           -r $SNOWFLAKE_ROLE \
           -w $SNOWFLAKE_WAREHOUSE \
-          -d ECOMMERCE_DB \
-          -c ECOMMERCE_DB.PUBLIC.SCHEMACHANGE_HISTORY \
+          -d $TARGET_DB \
+          -c $TARGET_DB.PUBLIC.SCHEMACHANGE_HISTORY \
           --create-change-history-table
